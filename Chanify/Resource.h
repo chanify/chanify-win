@@ -10,7 +10,7 @@
 #define IDD_ABOUTBOX			103
 #define IDM_ABOUT				104
 #define IDM_EXIT				105
-#define IDI_CHANIFY			    107
+#define IDI_CHANIFY				107
 #define IDC_CHANIFY			    108
 #define IDC_MYICON				2
 #ifndef IDC_STATIC
