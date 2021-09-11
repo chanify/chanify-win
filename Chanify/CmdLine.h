@@ -13,7 +13,8 @@
 #include "Chanify.h"
 #include <stdio.h>
 #include <shellapi.h>
-#include <string>
+#include <map>
+#include "Utils.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,25 +25,38 @@ class CCmdLine
 private:
 	bool			m_bAttached;
 	std::wstring	m_cmd;
+	std::map<std::wstring, std::wstring> m_params;
 public:
 	explicit CCmdLine(LPWSTR lpCmdLine) {
 		m_bAttached = AttachOutputToConsole();
 		if (lpCmdLine != NULL) {
-			int nArgs;
-			LPWSTR* szArglist = CommandLineToArgvW(lpCmdLine, &nArgs);
-			if (szArglist != NULL && nArgs > 0) {
-				int start = 0;
-				std::wstring cmd = szArglist[0];
+			int nArgs = __argc;
+			LPWSTR* szArglist = __wargv;
+			if (szArglist != NULL && nArgs > 1) {
+				int start = 1;
+				std::wstring cmd = szArglist[start];
 				if (!cmd.empty() && cmd[0] != '-' && cmd[0] != '/') {
-					for (auto c : cmd) {
-						m_cmd += std::tolower(c);
-					}
+					m_cmd = Utils::str2lower(cmd);
 					start++;
 				}
 				for (int i = start; i < nArgs; i++) {
-					//wprintf(L"%d: %s\n", i, szArglist[i]);
+					std::wstring arg = szArglist[i];
+					if (arg.size() >= 3 && arg[0] == '-' && arg[0] == '-') {
+						std::wstring key;
+						std::wstring value;
+						auto p = arg.find('=');
+						if (p == std::string::npos) {
+							key = arg.substr(2);
+						}
+						else {
+							key = arg.substr(2, p - 2);
+							value = arg.substr(p+1);
+						}
+						if (key.empty()) {
+							m_params[Utils::str2lower(key)] = value;
+						}
+					}
 				}
-				LocalFree(szArglist);
 			}
 		}
 	}

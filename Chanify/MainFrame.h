@@ -24,7 +24,7 @@ private:
     WCHAR       m_szName[128];
 public:
     explicit CWndClass(LPCWSTR szWindowClass, WNDPROC WndProc) {
-        if (szWindowClass == NULL || lstrcpynW(m_szName, szWindowClass, sizeof(m_szName) / sizeof(m_szName[0])) == NULL) {
+        if (szWindowClass == NULL || lstrcpynW(m_szName, szWindowClass, _countof(m_szName)) == NULL) {
             wprintf(m_szName, "WndClz.%p", this);
         }
 
@@ -61,7 +61,7 @@ private:
 public:
     explicit CMainFrame() {
         m_hWnd = NULL;
-        LoadStringW(Utils::Shared()->GetInstance(), IDS_APP_TITLE, m_szTitle, sizeof(m_szTitle)/sizeof(m_szTitle[0]));
+        LoadStringW(Utils::Shared()->GetInstance(), IDS_APP_TITLE, m_szTitle, _countof(m_szTitle));
     }
 
     BOOL Create(int nCmdShow) {
