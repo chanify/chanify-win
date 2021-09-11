@@ -19,19 +19,19 @@
 extern "C" {
 #endif // __cplusplus
 
-class Utils
+class CUtils
 {
 private:
 	HINSTANCE		m_hInstance;
 	std::wstring	m_version;
 	std::wstring	m_szModulePath;
 public:
-	explicit Utils(HINSTANCE hInstance) {
+	explicit CUtils(HINSTANCE hInstance) {
 		m_hInstance = hInstance;
 		m_szModulePath = _wpgmptr;
 	}
 
-	virtual ~Utils() {
+	virtual ~CUtils() {
 
 	}
 
@@ -75,13 +75,22 @@ public:
 		return m_version;
 	}
 
-	static std::shared_ptr<Utils>& Shared(void) {
-		static std::shared_ptr<Utils> instance;
+	inline std::wstring GetAppFilePath(const std::wstring& name) {
+		std::wstring path = name;
+		auto p = m_szModulePath.rfind('\\');
+		if (p != std::wstring::npos) {
+			path = m_szModulePath.substr(0, p + 1) + name;
+		}
+		return path;
+	}
+
+	static std::shared_ptr<CUtils>& Shared(void) {
+		static std::shared_ptr<CUtils> instance;
 		return instance;
 	}
 
 	static void Initialize(HINSTANCE hInstance, HINSTANCE hPrevInstance) {
-		auto ptr = std::make_shared<Utils>(hInstance);
+		auto ptr = std::make_shared<CUtils>(hInstance);
 		Shared().swap(ptr);
 	}
 

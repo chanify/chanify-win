@@ -8,6 +8,23 @@ Chanify is a safe and simple notification tools. This repository is windows clin
 
 ## Getting Started
 
+## Configuration
+
+```ini
+[client]
+name=Test
+endpoint=https://<endpoint>:<port>
+sound=1
+token=<senc node token>
+```
+
+| Key      | Default | Description                                 |
+| -------- | ------- | ------------------------------------------- |
+| name     | None    | The node server name.                       |
+| endpoint | None    | The node server endpoint.                   |
+| sound    | `0`     | `1` enable sound, otherwise disable sound.  |
+| token    | None    | The node server token for send.             |
+
 ## Contributing
 
 Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.

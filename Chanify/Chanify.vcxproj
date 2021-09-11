@@ -143,6 +143,7 @@
   <ItemGroup>
     <ClInclude Include="Chanify.h" />
     <ClInclude Include="CmdLine.h" />
+    <ClInclude Include="ConfigFile.h" />
     <ClInclude Include="HttpClient.h" />
     <ClInclude Include="MainFrame.h" />
     <ClInclude Include="Resource.h" />

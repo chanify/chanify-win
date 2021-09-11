@@ -36,7 +36,7 @@ public:
 				int start = 1;
 				std::wstring cmd = szArglist[start];
 				if (!cmd.empty() && cmd[0] != '-' && cmd[0] != '/') {
-					m_cmd = Utils::str2lower(cmd);
+					m_cmd = CUtils::str2lower(cmd);
 					start++;
 				}
 				for (int i = start; i < nArgs; i++) {
@@ -53,7 +53,7 @@ public:
 							value = arg.substr(p+1);
 						}
 						if (key.empty()) {
-							m_params[Utils::str2lower(key)] = value;
+							m_params[CUtils::str2lower(key)] = value;
 						}
 					}
 				}

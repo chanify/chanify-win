@@ -28,7 +28,7 @@ public:
             wprintf(m_szName, "WndClz.%p", this);
         }
 
-        HINSTANCE hInstance = Utils::Shared()->GetInstance();
+        HINSTANCE hInstance = CUtils::Shared()->GetInstance();
 
         WNDCLASSEX wcex;
         ZeroMemory(&wcex, sizeof(wcex));
@@ -47,7 +47,7 @@ public:
     }
 
     virtual ~CWndClass() {
-        UnregisterClassW(m_szName, Utils::Shared()->GetInstance());
+        UnregisterClassW(m_szName, CUtils::Shared()->GetInstance());
     }
 
     inline LPCWSTR Name(void) const { return m_szName; }
@@ -61,11 +61,11 @@ private:
 public:
     explicit CMainFrame() {
         m_hWnd = NULL;
-        LoadStringW(Utils::Shared()->GetInstance(), IDS_APP_TITLE, m_szTitle, _countof(m_szTitle));
+        LoadStringW(CUtils::Shared()->GetInstance(), IDS_APP_TITLE, m_szTitle, _countof(m_szTitle));
     }
 
     BOOL Create(int nCmdShow) {
-        m_hWnd = CreateWindowW(GetWndClass()->Name(), m_szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, Utils::Shared()->GetInstance(), this);
+        m_hWnd = CreateWindowW(GetWndClass()->Name(), m_szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, CUtils::Shared()->GetInstance(), this);
         if (!m_hWnd) {
             return FALSE;
         }
@@ -77,7 +77,7 @@ public:
 	int Run(void) {
         MSG msg;
         ZeroMemory(&msg, sizeof(msg));
-        HACCEL hAccelTable = LoadAccelerators(Utils::Shared()->GetInstance(), MAKEINTRESOURCE(IDC_CHANIFY));
+        HACCEL hAccelTable = LoadAccelerators(CUtils::Shared()->GetInstance(), MAKEINTRESOURCE(IDC_CHANIFY));
         if (hAccelTable) {
             while (GetMessage(&msg, nullptr, 0, 0)) {
                 if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) {
@@ -97,7 +97,7 @@ private:
             int wmId = LOWORD(wParam);
             switch (wmId) {
             case IDM_ABOUT:
-                DialogBox(Utils::Shared()->GetInstance(), MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, &CMainFrame::About);
+                DialogBox(CUtils::Shared()->GetInstance(), MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, &CMainFrame::About);
                 break;
             case IDM_EXIT:
                 DestroyWindow(hWnd);
