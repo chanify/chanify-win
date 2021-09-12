@@ -25,6 +25,7 @@ class CCmdLine
 private:
 	bool			m_bAttached;
 	std::wstring	m_cmd;
+	std::wstring	m_arg;
 	std::map<std::wstring, std::wstring> m_params;
 public:
 	explicit CCmdLine(LPWSTR lpCmdLine) {
@@ -55,7 +56,9 @@ public:
 						if (key.empty()) {
 							m_params[CUtils::str2lower(key)] = value;
 						}
+						continue;
 					}
+					m_arg = arg;
 				}
 			}
 		}
@@ -79,8 +82,8 @@ public:
 	}
 
 	inline bool IsInConsole(void) const { return m_bAttached; }
-
-	inline const std::wstring Command(void) const { return m_cmd; }
+	inline const std::wstring GetCommand(void) const { return m_cmd; }
+	inline const std::wstring GetArgument(void) const { return m_arg; }
 
 private:
 	inline bool AttachOutputToConsole(void) {

@@ -11,9 +11,11 @@
 #pragma once
 
 #include "Chanify.h"
+#include <userenv.h>
 #include <time.h>
 #include <string>
 #include <memory>
+#pragma comment(lib, "userenv.lib")
 #pragma comment(lib, "version.lib")
 
 #ifdef __cplusplus
@@ -77,6 +79,8 @@ public:
 		return m_version;
 	}
 
+	inline const std::wstring GetModulePath(void) const { return m_szModulePath; }
+
 	inline std::wstring GetAppFilePath(const std::wstring& name) {
 		std::wstring path = name;
 		auto p = m_szModulePath.rfind('\\');
@@ -94,6 +98,26 @@ public:
 	static void Initialize(HINSTANCE hInstance, HINSTANCE hPrevInstance) {
 		auto ptr = std::make_shared<CUtils>(hInstance);
 		Shared().swap(ptr);
+	}
+
+	static std::wstring GetUserProfilePath(const std::wstring& name) {
+		std::wstring path = name;
+		HANDLE hToken = NULL;
+		if (OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &hToken)) {
+			DWORD nSize = 0;
+			GetUserProfileDirectoryW(hToken, NULL, &nSize);
+			if (nSize++ > 0) {
+				LPWSTR lpPath = (LPWSTR)malloc(sizeof(WCHAR) * nSize);
+				if (lpPath != NULL) {
+					if (GetUserProfileDirectoryW(hToken, lpPath, &nSize)) {
+						path = std::wstring(lpPath) + L"\\" + name;
+					}
+					free(lpPath);
+				}
+			}
+			CloseHandle(hToken);
+		}
+		return path;
 	}
 
 public:
