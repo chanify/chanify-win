@@ -22,11 +22,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         if (cmd == L"version") {
             wprintf(L"Chanify version: %s\n", CUtils::Shared()->GetVersion().c_str());
         }
-        return 0;
+        return FALSE;
     }
-
-    
-    return 0;
+    CHttpClient httpClient;
+    auto endpoint = configFile.GetEndpoint();
+    if (!endpoint.empty()) {
+        endpoint += L"/v1/sender";
+        if (httpClient.Send(endpoint, configFile.GetToken())) {
+            return TRUE;
+        }
+    }
+    return FALSE;
 //    CMainFrame mainFrame;
 //    if (mainFrame.Create(nCmdShow)) {
 //        return mainFrame.Run();

@@ -20,6 +20,11 @@ extern "C" {
 class CConfigFile
 {
 private:
+	std::wstring	m_name;
+	std::wstring	m_endpoint;
+	std::wstring	m_token;
+	UINT			m_sound;
+
 	inline static std::wstring readString(const std::wstring path, const std::wstring& key) {
 		std::wstring res;
 		WCHAR data[4096] = { 0 };
@@ -35,11 +40,14 @@ private:
 public:
 	explicit CConfigFile() {
 		std::wstring path = CUtils::Shared()->GetAppFilePath(L"Chanify.ini");
-		wprintf(L"name: %s\n", readString(path, L"name").c_str());
-		wprintf(L"endpoint: %s\n", readString(path, L"endpoint").c_str());
-		wprintf(L"sound: %d\n", readInteger(path, L"sound"));
-		wprintf(L"token: %s\n", readString(path, L"token").c_str());
+		m_name = readString(path, L"name");
+		m_endpoint = readString(path, L"endpoint");
+		m_token = readString(path, L"token");
+		m_sound = readInteger(path, L"sound");
 	}
+
+	inline const std::wstring& GetEndpoint(void) const { return m_endpoint; }
+	inline const std::wstring& GetToken(void) const { return m_token; }
 };
 
 

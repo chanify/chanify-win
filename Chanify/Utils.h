@@ -11,6 +11,7 @@
 #pragma once
 
 #include "Chanify.h"
+#include <time.h>
 #include <string>
 #include <memory>
 #pragma comment(lib, "version.lib")
@@ -27,6 +28,7 @@ private:
 	std::wstring	m_szModulePath;
 public:
 	explicit CUtils(HINSTANCE hInstance) {
+		srand((unsigned)time(NULL));
 		m_hInstance = hInstance;
 		m_szModulePath = _wpgmptr;
 	}
@@ -100,6 +102,14 @@ public:
 		for (auto c : str) {
 			res += std::tolower(c);
 		}
+		return res;
+	}
+
+	inline static std::wstring A2W(const std::string& str) {
+		if (str.empty()) return std::wstring();
+		int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+		std::wstring res(size_needed, 0);
+		MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &res[0], size_needed);
 		return res;
 	}
 };
