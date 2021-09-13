@@ -24,80 +24,103 @@ extern "C" {
 class CHttpRequest
 {
 private:
-	HINTERNET		m_hRequest;
-	std::string		m_szBoundary;
-	std::vector<std::string> m_parts;
+	class IParam {
+	protected:
+		std::string m_data;
+	public:
+		explicit IParam(const std::string& name) {
+			m_data = std::string("Content-Disposition: form-data; name=\"") + CUtils::HttpEscape(name) + "\"\r\n\r\n";
+		}
+		virtual DWORD GetContentLength(void) const {
+			return m_data.size();
+		}
+		virtual bool WriteData(HINTERNET hRequest) const {
+			DWORD nSize = 0;
+			return WinHttpWriteData(hRequest, m_data.c_str(), m_data.size(), &nSize);
+		}
+	};
+
+	class IntParam : public IParam {
+	public:
+		explicit IntParam(const std::string& name, UINT val) : IParam(name) {
+			CHAR str[128] = { 0 };
+			sprintf_s(str, _countof(str), "%d\r\n", val);
+			m_data += std::string(str);
+		}
+	};
+
+	class StringParam : public IParam {
+	public:
+		explicit StringParam(const std::string& name, const std::wstring& val) : IParam(name) {
+			m_data += CUtils::W2A(val) + "\r\n";
+		}
+	};
+
+	std::wstring	m_url;
+	std::wstring	m_token;
+	std::string		m_boundary;
+	std::wstring	m_contentType;
+	std::vector<std::unique_ptr<IParam>>	m_params;
 public:
-	explicit CHttpRequest() {
-		m_hRequest = NULL;
+	explicit CHttpRequest(const std::wstring& url, const std::wstring& token) {
+		m_url = url;
+		m_token = token;
 		CHAR boundary[31] = { 0 };
 		for (int i = 0; i < _countof(boundary) - 1; i++) {
-			static const CHAR tbl[] = "0123456789ABCDEF";
+			static const CHAR tbl[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 			boundary[i] = tbl[rand() % (_countof(tbl) - 1)];
 		}
-		m_szBoundary = boundary;
+		m_boundary = boundary;
+		m_contentType = std::wstring(L"multipart/form-data; boundary=") + CUtils::A2W(m_boundary);
 	}
-	
+
 	virtual ~CHttpRequest() {
-		if (m_hRequest != NULL) {
-			WinHttpCloseHandle(m_hRequest);
-			m_hRequest = NULL;
-		}
 	}
 
-	inline bool Create(HINTERNET hConnect, const std::wstring& url, DWORD dwRequestFlags) {
-		bool res = false;
-		if (m_hRequest == NULL) {
-			m_hRequest = WinHttpOpenRequest(hConnect, L"POST", url.c_str(), NULL, NULL, NULL, dwRequestFlags);
-			if (m_hRequest != NULL) {
-				if (WinHttpSetTimeouts(m_hRequest, 10000, 10000, 15000, 15000)) {
-					res = true;
+	void AppendParamInteger(const std::string& name, UINT val) {
+		m_params.push_back(std::make_unique<IntParam>(name, val));
+	}
+
+	void AppendParamString(const std::string& name, const std::wstring& val) {
+		m_params.push_back(std::make_unique<StringParam>(name, val));
+	}
+
+	inline const std::wstring& GetUrl(void) const { return m_url; }
+	inline const std::wstring& GetToken(void) const { return m_token; }
+	inline const std::wstring& GetContentType(void) const { return m_contentType; }
+	DWORD GetContentLength(void) const {
+		DWORD length = 0;
+		if (!m_params.empty()) {
+			for (auto p = m_params.begin(); p != m_params.end(); p++) {
+				length += (*p)->GetContentLength() + m_boundary.size() + 4;
+			}
+			length += m_boundary.size() + 4;
+		}
+		return length;
+	}
+	bool WriteData(HINTERNET hRequest) const {
+		bool res = true;
+		if (!m_params.empty()) {
+			DWORD nSize = 0;
+			std::string boundary = std::string("--") + m_boundary + "\r\n";
+			for (auto p = m_params.begin(); p != m_params.end(); p++) {
+				if (!WinHttpWriteData(hRequest, boundary.c_str(), boundary.size(), &nSize)) {
+					res = false;
+					break;
 				}
-				else {
-					WinHttpCloseHandle(m_hRequest);
-					m_hRequest = NULL;
+				if (!(*p)->WriteData(hRequest)) {
+					res = false;
+					break;
+				}
+			}
+			if (res) {
+				boundary = std::string("--") + m_boundary + "--";
+				if (!WinHttpWriteData(hRequest, boundary.c_str(), boundary.size(), &nSize)) {
+					res = false;
 				}
 			}
 		}
 		return res;
-	}
-
-	inline bool SetHeader(const std::wstring& name, const std::wstring& value) {
-		bool res = false;
-		if (m_hRequest != NULL) {
-			std::wstring header = name + L": " + value;
-			if (WinHttpAddRequestHeaders(m_hRequest, header.c_str(), (ULONG)-1L, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE)) {
-				res = true;
-			}
-		}
-		return res;
-	}
-
-	inline bool Send(const std::wstring& token) {
-		bool res = false;
-		if (m_hRequest != NULL) {
-			auto contentType = std::wstring(L"multipart/form-data; boundary=") + CUtils::A2W(m_szBoundary);
-			if (SetHeader(L"Token", token.c_str()) && SetHeader(L"Content-Type", contentType.c_str())) {
-				std::string body;
-				for (auto p : m_parts) {
-					body += std::string("--") + m_szBoundary + "\r\n" + p;
-				}
-				body += std::string("--") + m_szBoundary + std::string("--");
-				DWORD totalSize = body.size();
-				if (WinHttpSendRequest(m_hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, totalSize, NULL)) {
-					if (WinHttpWriteData(m_hRequest, body.c_str(), totalSize, NULL)) {
-						if (WinHttpReceiveResponse(m_hRequest, NULL)) {
-							res = true;
-						}
-					}
-				}
-			}
-		}
-		return res;
-	}
-
-	inline void AddParts(const std::string& name, const std::string& value) {
-		m_parts.push_back(std::string("Content-Disposition: form-data; name=\"") + name + "\"\r\n\r\n" + value + "\r\n");
 	}
 };
 
@@ -120,11 +143,12 @@ public:
 		}
 	}
 
-	inline bool Send(const std::wstring& url, const std::wstring& token) {
+	bool Send(const CHttpRequest& request) {
 		bool res = false;
 		if (m_hSession != NULL) {
 			std::wstring hostName;
 			std::wstring urlPath;
+			auto url = request.GetUrl();
 			hostName.resize(url.size());
 			urlPath.resize(url.size());
 			URL_COMPONENTSW urlComp = { 0 };
@@ -136,11 +160,21 @@ public:
 			if (WinHttpCrackUrl(url.c_str(), url.size(), 0, &urlComp)) {
 				HINTERNET hConnect = WinHttpConnect(m_hSession, hostName.c_str(), urlComp.nPort, 0);
 				if (hConnect != NULL) {
-					CHttpRequest request;
-					if (request.Create(hConnect, urlPath, (INTERNET_SCHEME_HTTP == urlComp.nScheme ? 0 : WINHTTP_FLAG_SECURE))) {
-						request.AddParts("sound", "1");
-						request.AddParts("text", "Hello world!");
-						res = request.Send(token);
+					DWORD dwRequestFlags = (INTERNET_SCHEME_HTTP == urlComp.nScheme ? 0 : WINHTTP_FLAG_SECURE);
+					HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"POST", urlPath.c_str(), NULL, NULL, NULL, dwRequestFlags);
+					if (hRequest != NULL) {
+						if (WinHttpSetTimeouts(hRequest, 10000, 10000, 15000, 15000)
+							&& SetHeader(hRequest, L"Token", request.GetToken().c_str())
+							&& SetHeader(hRequest, L"Content-Type", request.GetContentType().c_str())) {
+							DWORD totalSize = request.GetContentLength();
+							if (WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, totalSize, NULL)
+								&& request.WriteData(hRequest)
+								&& WinHttpReceiveResponse(hRequest, NULL)) {
+
+								res = true;
+							}
+						}
+						WinHttpCloseHandle(hRequest);
 					}
 					WinHttpCloseHandle(hConnect);
 				}
@@ -148,7 +182,17 @@ public:
 		}
 		return res;
 	}
-
+private:
+	static inline bool SetHeader(HINTERNET hRequest, const std::wstring & name, const std::wstring & value) {
+		bool res = false;
+		if (hRequest != NULL) {
+			std::wstring header = name + L": " + value;
+			if (WinHttpAddRequestHeaders(hRequest, header.c_str(), (ULONG)-1L, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE)) {
+				res = true;
+			}
+		}
+		return res;
+	}
 };
 
 #ifdef __cplusplus

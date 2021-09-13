@@ -99,8 +99,32 @@ public:
 		auto ptr = std::make_shared<CUtils>(hInstance);
 		Shared().swap(ptr);
 	}
+public:
+	inline static std::wstring ToLower(const std::wstring& str) {
+		std::wstring res;
+		for (auto c : str) {
+			res += std::tolower(c);
+		}
+		return res;
+	}
 
-	static std::wstring GetUserProfilePath(const std::wstring& name) {
+	inline static std::wstring A2W(const std::string& str) {
+		if (str.empty()) return std::wstring();
+		int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+		std::wstring res(size_needed, 0);
+		MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &res[0], size_needed);
+		return res;
+	}
+
+	inline static std::string W2A(const std::wstring& str) {
+		if (str.empty()) return std::string();
+		int size_needed = WideCharToMultiByte(CP_UTF8, 0, &str[0], -1, NULL, 0, NULL, NULL);
+		std::string res(size_needed, 0);
+		WideCharToMultiByte(CP_UTF8, 0, &str[0], -1, &res[0], size_needed, NULL, NULL);
+		return res;
+	}
+
+	inline static std::wstring GetUserProfilePath(const std::wstring& name) {
 		std::wstring path = name;
 		HANDLE hToken = NULL;
 		if (OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &hToken)) {
@@ -120,22 +144,27 @@ public:
 		return path;
 	}
 
-public:
-	inline static std::wstring str2lower(const std::wstring& str) {
-		std::wstring res;
-		for (auto c : str) {
-			res += std::tolower(c);
+	inline static std::string HttpEscape(const std::string& str) {
+		std::string res = str;
+		DWORD nEscape = 1;
+		CHAR empty[1];
+		HRESULT hres = UrlEscapeA(str.c_str(), empty, &nEscape, URL_ESCAPE_PERCENT);
+		if (SUCCEEDED(hres)) {
+			res = empty;
+		}
+		else if (hres == E_POINTER) {
+			LPSTR lpStr = (LPSTR)malloc(sizeof(CHAR) * nEscape);
+			if (lpStr != NULL) {
+				HRESULT hres = UrlEscapeA(str.c_str(), lpStr, &nEscape, URL_ESCAPE_PERCENT);
+				if (SUCCEEDED(hres)) {
+					res = lpStr;
+				}
+				free(lpStr);
+			}
 		}
 		return res;
 	}
 
-	inline static std::wstring A2W(const std::string& str) {
-		if (str.empty()) return std::wstring();
-		int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
-		std::wstring res(size_needed, 0);
-		MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &res[0], size_needed);
-		return res;
-	}
 };
 
 #ifdef __cplusplus

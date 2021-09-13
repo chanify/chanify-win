@@ -79,16 +79,28 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     else if (cmd == L"msend") {
         auto path = cmdLine.GetArgument();
         if (!path.empty()) {
-            // TODO: Send file
+            CConfigFile configFile;
+            CHttpClient httpClient;
+            auto endpoint = configFile.GetEndpoint();
+            if (!endpoint.empty()) {
+                CHttpRequest request(endpoint + L"/v1/sender", configFile.GetToken());
+                if (httpClient.Send(request)) {
+                    return TRUE;
+                }
+            }
         }
+        MessageBoxW(NULL, L"Send message failed!", L"Info", MB_OK);
     }
     else if (cmd == L"send") {
         CConfigFile configFile;
         CHttpClient httpClient;
         auto endpoint = configFile.GetEndpoint();
-        if (!endpoint.empty()) {
-            endpoint += L"/v1/sender";
-            if (httpClient.Send(endpoint, configFile.GetToken())) {
+        auto text = cmdLine.GetParam(L"text");
+        if (!endpoint.empty() && !text.empty()) {
+            CHttpRequest request(endpoint + L"/v1/sender", configFile.GetToken());
+            request.AppendParamInteger("sound", 1);
+            request.AppendParamString("text", text);
+            if (httpClient.Send(request)) {
                 return TRUE;
             }
         }

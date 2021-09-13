@@ -37,7 +37,7 @@ public:
 				int start = 1;
 				std::wstring cmd = szArglist[start];
 				if (!cmd.empty() && cmd[0] != '-' && cmd[0] != '/') {
-					m_cmd = CUtils::str2lower(cmd);
+					m_cmd = CUtils::ToLower(cmd);
 					start++;
 				}
 				for (int i = start; i < nArgs; i++) {
@@ -53,8 +53,8 @@ public:
 							key = arg.substr(2, p - 2);
 							value = arg.substr(p+1);
 						}
-						if (key.empty()) {
-							m_params[CUtils::str2lower(key)] = value;
+						if (!key.empty()) {
+							m_params[CUtils::ToLower(key)] = value;
 						}
 						continue;
 					}
@@ -84,7 +84,14 @@ public:
 	inline bool IsInConsole(void) const { return m_bAttached; }
 	inline const std::wstring GetCommand(void) const { return m_cmd; }
 	inline const std::wstring GetArgument(void) const { return m_arg; }
-
+	inline std::wstring GetParam(const std::wstring& key) const {
+		std::wstring res;
+		auto p = m_params.find(key);
+		if (p != m_params.end()) {
+			res = p->second;
+		}
+		return res;
+	}
 private:
 	inline bool AttachOutputToConsole(void) {
 		if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
