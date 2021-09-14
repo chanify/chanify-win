@@ -13,6 +13,7 @@
 #include "Chanify.h"
 #include <winhttp.h>
 #include <versionhelpers.h>
+#include <sys/stat.h>
 #include <vector>
 #include "Utils.h"
 #pragma comment(lib, "winhttp.lib")
@@ -31,6 +32,7 @@ private:
 		explicit IParam(const std::string& name) {
 			m_data = std::string("Content-Disposition: form-data; name=\"") + CUtils::HttpEscape(name) + "\"\r\n\r\n";
 		}
+		virtual ~IParam() {}
 		virtual DWORD GetContentLength(void) const {
 			return m_data.size();
 		}
@@ -53,6 +55,54 @@ private:
 	public:
 		explicit StringParam(const std::string& name, const std::wstring& val) : IParam(name) {
 			m_data += CUtils::W2A(val) + "\r\n";
+		}
+	};
+
+	class FileParam : public IParam {
+	private:
+		FILE* m_fp;
+
+	public:
+		explicit FileParam(const std::string& name, const std::wstring& fname, const std::wstring& path) : IParam(name) {
+			m_data = std::string("Content-Disposition: form-data; name=\"") + CUtils::HttpEscape(name)
+					+ "\"; filename=\"" + CUtils::HttpEscape(CUtils::W2A(fname)) + "\"\r\nContent-Type: application/octet-stream\r\n\r\n";
+			m_fp = _wfopen(path.c_str(), L"rb");
+		}
+		virtual ~FileParam() {
+			if (m_fp) {
+				fclose(m_fp);
+				m_fp = NULL;
+			}
+		}
+		virtual DWORD GetContentLength(void) const {
+			DWORD size = m_data.size() + 2;
+			if (m_fp != NULL) {
+				fseek(m_fp, 0, SEEK_END);
+				size += ftell(m_fp);
+			}
+			return size;
+		}
+		virtual bool WriteData(HINTERNET hRequest) const {
+			DWORD nSize = 0;
+			if (!WinHttpWriteData(hRequest, m_data.c_str(), m_data.size(), &nSize)) {
+				return false;
+			}
+			if (m_fp != NULL) {
+				fseek(m_fp, 0, SEEK_SET);
+				for (;;) {
+					uint8_t buffer[4096];
+					size_t sz = fread(buffer, 1, _countof(buffer), m_fp);
+					if (sz <= 0) {
+						break;
+					} else {
+						if (!WinHttpWriteData(hRequest, buffer, sz, &nSize)) {
+							return false;
+						}
+					}
+				}
+			}
+			CHAR end[] = "\r\n";
+			return WinHttpWriteData(hRequest, end, 2, &nSize);
 		}
 	};
 
@@ -85,9 +135,14 @@ public:
 		m_params.push_back(std::make_unique<StringParam>(name, val));
 	}
 
+	void AppendParamFile(const std::string& name, const std::wstring fname, const std::wstring path) {
+		m_params.push_back(std::make_unique<FileParam>(name, fname, path));
+	}
+
 	inline const std::wstring& GetUrl(void) const { return m_url; }
 	inline const std::wstring& GetToken(void) const { return m_token; }
 	inline const std::wstring& GetContentType(void) const { return m_contentType; }
+
 	DWORD GetContentLength(void) const {
 		DWORD length = 0;
 		if (!m_params.empty()) {
@@ -98,6 +153,7 @@ public:
 		}
 		return length;
 	}
+
 	bool WriteData(HINTERNET hRequest) const {
 		bool res = true;
 		if (!m_params.empty()) {

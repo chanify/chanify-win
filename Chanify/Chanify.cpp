@@ -50,12 +50,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     CCmdLine cmdLine(lpCmdLine);
     auto cmd = cmdLine.GetCommand();
-    if (cmd == L"version") {
-        if (cmdLine.IsInConsole()) {
-            wprintf(L"Chanify version: %s\n", CUtils::Shared()->GetVersion().c_str());
-        }
-    }
-    else if (cmd == L"install") {
+    if (cmd == L"install") {
         auto path = CUtils::GetUserProfilePath(AppLnkPath);
         if (PathFileExists(path.c_str())) {
             DeleteFileW(path.c_str());
@@ -76,14 +71,49 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             MessageBoxW(NULL, L"Uninstall failed!", L"Info", MB_OK);
         }
     }
+    else if (cmd == L"send") {
+        CConfigFile configFile;
+        CHttpClient httpClient;
+        auto endpoint = cmdLine.GetParam(L"endpoint");
+        if (endpoint.empty()) endpoint = configFile.GetEndpoint();
+        if (!endpoint.empty()) {
+            auto token = cmdLine.GetParam(L"token");
+            if (token.empty()) token = configFile.GetToken();
+            CHttpRequest request(endpoint + L"/v1/sender", token);
+            request.AppendParamInteger("sound", configFile.GetSound());
+            auto text = cmdLine.GetParam(L"text");
+            if (!text.empty()) request.AppendParamString("text", text);
+            auto title = cmdLine.GetParam(L"title");
+            if (!title.empty()) request.AppendParamString("title", title);
+            auto link = cmdLine.GetParam(L"link");
+            if (!link.empty()) request.AppendParamString("link", link);
+            if (httpClient.Send(request)) {
+                return TRUE;
+            }
+        }
+    }
     else if (cmd == L"msend") {
         auto path = cmdLine.GetArgument();
         if (!path.empty()) {
             CConfigFile configFile;
             CHttpClient httpClient;
-            auto endpoint = configFile.GetEndpoint();
+            auto endpoint = cmdLine.GetParam(L"endpoint");
+            if (endpoint.empty()) endpoint = configFile.GetEndpoint();
             if (!endpoint.empty()) {
-                CHttpRequest request(endpoint + L"/v1/sender", configFile.GetToken());
+                auto token = cmdLine.GetParam(L"token");
+                if (token.empty()) token = configFile.GetToken();
+                CHttpRequest request(endpoint + L"/v1/sender", token);
+                request.AppendParamInteger("sound", configFile.GetSound());
+                auto ext = CUtils::GetFileExt(path);
+                if (ext == L"png" || ext == L"jpeg" || ext == L"jpg") {
+                    request.AppendParamFile("image", L"image", path);
+                }
+                else if (ext == L"mp3" || ext == L"m4a" || ext == L"aa" || ext == L"aax" || ext == L"aac" || ext == L"ac3" || ext == L"wav" || ext == L"aiff" || ext == L"flac") {
+                    request.AppendParamFile("audio", L"audio", path);
+                }
+                else {
+                    request.AppendParamFile("file", CUtils::GetFileBaseName(path), path);
+                }
                 if (httpClient.Send(request)) {
                     return TRUE;
                 }
@@ -91,18 +121,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         }
         MessageBoxW(NULL, L"Send message failed!", L"Info", MB_OK);
     }
-    else if (cmd == L"send") {
-        CConfigFile configFile;
-        CHttpClient httpClient;
-        auto endpoint = configFile.GetEndpoint();
-        auto text = cmdLine.GetParam(L"text");
-        if (!endpoint.empty() && !text.empty()) {
-            CHttpRequest request(endpoint + L"/v1/sender", configFile.GetToken());
-            request.AppendParamInteger("sound", 1);
-            request.AppendParamString("text", text);
-            if (httpClient.Send(request)) {
-                return TRUE;
-            }
+    else {
+        // version
+        if (cmdLine.IsInConsole()) {
+            wprintf(L"Chanify version: %s\n", CUtils::Shared()->GetVersion().c_str());
+        }
+        else {
+            auto ver = std::wstring(L"Chanify version: ") + CUtils::Shared()->GetVersion();
+            MessageBoxW(NULL, ver.c_str(), L"Chanify", MB_OK);
         }
     }
     return FALSE;

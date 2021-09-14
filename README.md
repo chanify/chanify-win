@@ -3,6 +3,7 @@
 [![Release](https://img.shields.io/github/v/release/chanify/chanify-win?logo=github&style=flat-square)](https://github.com/chanify/chanify-win/releases/latest)
 [![Workflow](https://img.shields.io/github/workflow/status/chanify/chanify-win/ci?label=build&logo=github&style=flat-square)](https://github.com/chanify/chanify-win/actions?workflow=ci)
 [![GitHub](https://img.shields.io/github/license/chanify/chanify-win?style=flat-square)](LICENSE)
+[![Downloads](https://img.shields.io/github/downloads/chanify/chanify-win/total?style=flat-square)](https://github.com/chanify/chanify-win/releases/latest)
 
 Chanify is a safe and simple notification tools. This repository is windows clinet for Chanify.
 

@@ -165,6 +165,26 @@ public:
 		return res;
 	}
 
+	inline static std::wstring GetFileExt(const std::wstring& filepath) {
+		std::wstring ext;
+		auto p = filepath.find_last_of(L".");
+		if (p != std::wstring::npos) {
+			for (auto i = p + 1; i < filepath.size(); i++) {
+				auto c = filepath[i];
+				ext += std::tolower(c);
+			}
+		}
+		return ext;
+	}
+
+	inline static std::wstring GetFileBaseName(const std::wstring& filepath) {
+		std::wstring name = filepath;
+		auto p = filepath.find_last_of(L"\\/");
+		if (p != std::wstring::npos) {
+			name = filepath.substr(p + 1);
+		}
+		return name;
+	}
 };
 
 #ifdef __cplusplus

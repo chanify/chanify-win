@@ -48,6 +48,7 @@ public:
 
 	inline const std::wstring& GetEndpoint(void) const { return m_endpoint; }
 	inline const std::wstring& GetToken(void) const { return m_token; }
+	inline UINT GetSound(void) const { return m_sound; }
 };
 
 
