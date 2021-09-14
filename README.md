@@ -9,7 +9,7 @@ Chanify is a safe and simple notification tools. This repository is windows clin
 
 ## Getting Started
 
-- Creating `Chanify.ini` files in the same directory as `Chanify.exe`.
+- Create `Chanify.ini` files in the same directory as `Chanify.exe`.
 - Double click `Chanify.exe`, then add `Chanify` into `Explorer Context menus`.
 
 ## Configuration
