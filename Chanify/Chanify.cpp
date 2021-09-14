@@ -7,8 +7,6 @@
 
 #include "Chanify.h"
 #include <Shlwapi.h>
-#include <ShObjIdl.h>
-#include <ShlGuid.h>
 #include "CmdLine.h"
 #include "HttpClient.h"
 #include "ConfigFile.h"
@@ -17,58 +15,25 @@
 
 #pragma comment(lib, "shlwapi.lib")
 
-#define AppLnkPath  L"AppData\\Roaming\\Microsoft\\Windows\\SendTo\\Chanify.lnk"
-
-static inline bool InstallApp(LPCWSTR lpPath) {
-    bool res = false;
-    HRESULT hres = CoInitialize(NULL);
-    if (SUCCEEDED(hres)) {
-        IShellLink* psl = NULL;
-        hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (LPVOID*)&psl);
-        if (SUCCEEDED(hres)) {
-            IPersistFile* ppf;
-            psl->SetPath(CUtils::Shared()->GetModulePath().c_str());
-            psl->SetDescription(L"Chanify Sender");
-            psl->SetArguments(L"msend");
-            hres = psl->QueryInterface(IID_IPersistFile, (LPVOID*)&ppf);
-            if (SUCCEEDED(hres)) {
-                hres = ppf->Save(lpPath, TRUE);
-                if (SUCCEEDED(hres)) {
-                    res = true;
-                }
-                ppf->Release();
-            }
-            psl->Release();
-        }
-        CoUninitialize();
-    }
-    return res;
-}
-
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow) {
     CUtils::Initialize(hInstance, hPrevInstance);
 
     CCmdLine cmdLine(lpCmdLine);
     auto cmd = cmdLine.GetCommand();
     if (cmd == L"install") {
-        auto path = CUtils::GetUserProfilePath(AppLnkPath);
-        if (PathFileExists(path.c_str())) {
-            DeleteFileW(path.c_str());
-        }
-        if (InstallApp(path.c_str())) {
-            MessageBoxW(NULL, L"Install success!", L"Info", MB_OK);
+        if (CUtils::InstallApp()) {
+            cmdLine.ShowInfo(L"Install success!");
         }
         else {
-            MessageBoxW(NULL, L"Install failed!", L"Info", MB_OK);
+            cmdLine.ShowInfo(L"Install failed!");
         }
     }
     else if (cmd == L"uninstall") {
-        auto path = CUtils::GetUserProfilePath(AppLnkPath);
-        if (!PathFileExists(path.c_str()) || DeleteFileW(path.c_str())) {
-            MessageBoxW(NULL, L"Uninstall success!", L"Info", MB_OK);
+        if (CUtils::UninstallApp()) {
+            cmdLine.ShowInfo(L"Uninstall success!");
         }
         else {
-            MessageBoxW(NULL, L"Uninstall failed!", L"Info", MB_OK);
+            cmdLine.ShowInfo(L"Uinstall failed!");
         }
     }
     else if (cmd == L"send") {
@@ -119,16 +84,32 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 }
             }
         }
-        MessageBoxW(NULL, L"Send message failed!", L"Info", MB_OK);
+        cmdLine.ShowInfo(L"Send message failed!");
     }
     else {
         // version
         if (cmdLine.IsInConsole()) {
             wprintf(L"Chanify version: %s\n", CUtils::Shared()->GetVersion().c_str());
         }
+        else if (CUtils::IsAppInstalled()) {
+            if (MessageBoxW(NULL, L"Uninstall App or not?", L"Chanify", MB_YESNO) == IDYES) {
+                if (CUtils::UninstallApp()) {
+                    cmdLine.ShowInfo(L"Uninstall success!");
+                }
+                else {
+                    cmdLine.ShowInfo(L"Uninstall failed!");
+                }
+            }
+        }
         else {
-            auto ver = std::wstring(L"Chanify version: ") + CUtils::Shared()->GetVersion();
-            MessageBoxW(NULL, ver.c_str(), L"Chanify", MB_OK);
+            if (MessageBoxW(NULL, L"Install App or not?", L"Chanify", MB_YESNO) == IDYES) {
+                if (CUtils::InstallApp()) {
+                    cmdLine.ShowInfo(L"Install success!");
+                }
+                else {
+                    cmdLine.ShowInfo(L"Install failed!");
+                }
+            }
         }
     }
     return FALSE;

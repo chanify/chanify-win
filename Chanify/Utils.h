@@ -11,6 +11,8 @@
 #pragma once
 
 #include "Chanify.h"
+#include <ShObjIdl.h>
+#include <ShlGuid.h>
 #include <userenv.h>
 #include <time.h>
 #include <string>
@@ -21,6 +23,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
+
+#define AppLnkPath  L"AppData\\Roaming\\Microsoft\\Windows\\SendTo\\Chanify.lnk"
 
 class CUtils
 {
@@ -184,6 +188,46 @@ public:
 			name = filepath.substr(p + 1);
 		}
 		return name;
+	}
+
+	inline static bool IsAppInstalled(void) {
+		auto path = CUtils::GetUserProfilePath(AppLnkPath);
+		return (PathFileExists(path.c_str()));
+	}
+
+	inline static bool InstallApp(void) {
+		bool res = false;
+		auto path = CUtils::GetUserProfilePath(AppLnkPath);
+		if (PathFileExists(path.c_str())) {
+			DeleteFileW(path.c_str());
+		}
+		HRESULT hres = CoInitialize(NULL);
+		if (SUCCEEDED(hres)) {
+			IShellLink* psl = NULL;
+			hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (LPVOID*)&psl);
+			if (SUCCEEDED(hres)) {
+				IPersistFile* ppf;
+				psl->SetPath(CUtils::Shared()->GetModulePath().c_str());
+				psl->SetDescription(L"Chanify Sender");
+				psl->SetArguments(L"msend");
+				hres = psl->QueryInterface(IID_IPersistFile, (LPVOID*)&ppf);
+				if (SUCCEEDED(hres)) {
+					hres = ppf->Save(path.c_str(), TRUE);
+					if (SUCCEEDED(hres)) {
+						res = true;
+					}
+					ppf->Release();
+				}
+				psl->Release();
+			}
+			CoUninitialize();
+		}
+		return res;
+	}
+
+	inline static bool UninstallApp(void) {
+		auto path = CUtils::GetUserProfilePath(AppLnkPath);
+		return (!PathFileExists(path.c_str()) || DeleteFileW(path.c_str()));
 	}
 };
 

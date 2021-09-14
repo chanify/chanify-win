@@ -92,6 +92,15 @@ public:
 		}
 		return res;
 	}
+
+	inline void ShowInfo(const std::wstring& info) const {
+		if (IsInConsole()) {
+			wprintf(L"%s\n", info.c_str());
+		}
+		else {
+			MessageBoxW(NULL, info.c_str(), L"Chanify", MB_OK);
+		}
+	}
 private:
 	inline bool AttachOutputToConsole(void) {
 		if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
