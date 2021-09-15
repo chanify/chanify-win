@@ -34,12 +34,22 @@ jobs:
       - name: Build
         run: |
           msbuild Chanify.sln -p:Configuration=Release -p:Platform=x86
-          cp Release/Chanify.exe ./Chanify.exe
-      - uses: "marvinpinto/action-automatic-releases@latest"
+          msbuild Chanify.sln -p:Configuration=Release -p:Platform=x64
+          mkdir chanify_windows_i386
+          cp Release\Chanify.exe .\chanify_windows_i386\
+          cp LICENSE .\chanify_windows_i386\
+          cp README.md .\chanify_windows_i386\
+          powershell Compress-Archive -Path .\chanify_windows_i386\* -DestinationPath .\chanify_windows_i386.zip
+          mkdir chanify_windows_x86_64
+          cp x64\Release\Chanify.exe .\chanify_windows_x86_64\
+          cp LICENSE .\chanify_windows_x86_64\
+          cp README.md .\chanify_windows_x86_64\
+          powershell Compress-Archive -Path .\chanify_windows_x86_64\* -DestinationPath .\chanify_windows_x86_64.zip
+      - name: Run Releaser
+        uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
           files: |
-            LICENSE
-            README.md
-            Chanify.exe
+            chanify_windows_i386.zip
+            chanify_windows_x86_64.zip

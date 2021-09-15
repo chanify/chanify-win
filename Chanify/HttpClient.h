@@ -34,11 +34,11 @@ private:
 		}
 		virtual ~IParam() {}
 		virtual DWORD GetContentLength(void) const {
-			return m_data.size();
+			return (DWORD)m_data.size();
 		}
 		virtual bool WriteData(HINTERNET hRequest) const {
 			DWORD nSize = 0;
-			return WinHttpWriteData(hRequest, m_data.c_str(), m_data.size(), &nSize);
+			return WinHttpWriteData(hRequest, m_data.c_str(), (DWORD)m_data.size(), &nSize);
 		}
 	};
 
@@ -75,7 +75,7 @@ private:
 			}
 		}
 		virtual DWORD GetContentLength(void) const {
-			DWORD size = m_data.size() + 2;
+			DWORD size = (DWORD)m_data.size() + 2;
 			if (m_fp != NULL) {
 				fseek(m_fp, 0, SEEK_END);
 				size += ftell(m_fp);
@@ -84,7 +84,7 @@ private:
 		}
 		virtual bool WriteData(HINTERNET hRequest) const {
 			DWORD nSize = 0;
-			if (!WinHttpWriteData(hRequest, m_data.c_str(), m_data.size(), &nSize)) {
+			if (!WinHttpWriteData(hRequest, m_data.c_str(), (DWORD)m_data.size(), &nSize)) {
 				return false;
 			}
 			if (m_fp != NULL) {
@@ -95,7 +95,7 @@ private:
 					if (sz <= 0) {
 						break;
 					} else {
-						if (!WinHttpWriteData(hRequest, buffer, sz, &nSize)) {
+						if (!WinHttpWriteData(hRequest, buffer, (DWORD)sz, &nSize)) {
 							return false;
 						}
 					}
@@ -147,9 +147,9 @@ public:
 		DWORD length = 0;
 		if (!m_params.empty()) {
 			for (auto p = m_params.begin(); p != m_params.end(); p++) {
-				length += (*p)->GetContentLength() + m_boundary.size() + 4;
+				length += (*p)->GetContentLength() + (DWORD)m_boundary.size() + 4;
 			}
-			length += m_boundary.size() + 4;
+			length += (DWORD)m_boundary.size() + 4;
 		}
 		return length;
 	}
@@ -160,7 +160,7 @@ public:
 			DWORD nSize = 0;
 			std::string boundary = std::string("--") + m_boundary + "\r\n";
 			for (auto p = m_params.begin(); p != m_params.end(); p++) {
-				if (!WinHttpWriteData(hRequest, boundary.c_str(), boundary.size(), &nSize)) {
+				if (!WinHttpWriteData(hRequest, boundary.c_str(), (DWORD)boundary.size(), &nSize)) {
 					res = false;
 					break;
 				}
@@ -171,7 +171,7 @@ public:
 			}
 			if (res) {
 				boundary = std::string("--") + m_boundary + "--";
-				if (!WinHttpWriteData(hRequest, boundary.c_str(), boundary.size(), &nSize)) {
+				if (!WinHttpWriteData(hRequest, boundary.c_str(), (DWORD)boundary.size(), &nSize)) {
 					res = false;
 				}
 			}
@@ -210,10 +210,10 @@ public:
 			URL_COMPONENTSW urlComp = { 0 };
 			urlComp.dwStructSize = sizeof(urlComp);
 			urlComp.lpszHostName = const_cast<wchar_t*>(hostName.data());
-			urlComp.dwHostNameLength = hostName.size();
+			urlComp.dwHostNameLength = (DWORD)hostName.size();
 			urlComp.lpszUrlPath = const_cast<wchar_t*>(urlPath.data());
-			urlComp.dwUrlPathLength = urlPath.size();
-			if (WinHttpCrackUrl(url.c_str(), url.size(), 0, &urlComp)) {
+			urlComp.dwUrlPathLength = (DWORD)urlPath.size();
+			if (WinHttpCrackUrl(url.c_str(), (DWORD)url.size(), 0, &urlComp)) {
 				HINTERNET hConnect = WinHttpConnect(m_hSession, hostName.c_str(), urlComp.nPort, 0);
 				if (hConnect != NULL) {
 					DWORD dwRequestFlags = (INTERNET_SCHEME_HTTP == urlComp.nScheme ? 0 : WINHTTP_FLAG_SECURE);
