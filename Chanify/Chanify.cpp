@@ -74,7 +74,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                     request.AppendParamFile("image", L"image", path);
                 }
                 else if (ext == L"mp3" || ext == L"m4a" || ext == L"aa" || ext == L"aax" || ext == L"aac" || ext == L"ac3" || ext == L"wav" || ext == L"aiff" || ext == L"flac") {
-                    request.AppendParamFile("audio", L"audio", path);
+                    auto faudo = CUtils::GetFileBaseName(path);
+                    if (faudo.empty()) {
+                        faudo = L"audio";
+                    }
+                    request.AppendParamFile("audio", faudo, path);
                 }
                 else {
                     request.AppendParamFile("file", CUtils::GetFileBaseName(path), path);
