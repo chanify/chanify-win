@@ -52,6 +52,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             if (!title.empty()) request.AppendParamString("title", title);
             auto link = cmdLine.GetParam(L"link");
             if (!link.empty()) request.AppendParamString("link", link);
+            auto interruptionLevel = cmdLine.GetParam(L"interruption-level");
+            if (interruptionLevel.empty()) interruptionLevel = configFile.GetInterruptionLevel();
+            if (!interruptionLevel.empty()) request.AppendParamString("interruption-level", interruptionLevel);
             if (httpClient.Send(request)) {
                 return TRUE;
             }
@@ -69,16 +72,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 if (token.empty()) token = configFile.GetToken();
                 CHttpRequest request(endpoint + L"/v1/sender", token);
                 request.AppendParamInteger("sound", configFile.GetSound());
+                auto interruptionLevel = cmdLine.GetParam(L"interruption-level");
+                if (interruptionLevel.empty()) interruptionLevel = configFile.GetInterruptionLevel();
+                if (!interruptionLevel.empty()) request.AppendParamString("interruption-level", interruptionLevel);
                 auto ext = CUtils::GetFileExt(path);
                 if (ext == L"png" || ext == L"jpeg" || ext == L"jpg") {
                     request.AppendParamFile("image", L"image", path);
                 }
                 else if (ext == L"mp3" || ext == L"m4a" || ext == L"aa" || ext == L"aax" || ext == L"aac" || ext == L"ac3" || ext == L"wav" || ext == L"aiff" || ext == L"flac") {
-                    auto faudo = CUtils::GetFileBaseName(path);
-                    if (faudo.empty()) {
-                        faudo = L"audio";
-                    }
-                    request.AppendParamFile("audio", faudo, path);
+                    auto faudio = CUtils::GetFileBaseName(path);
+                    if (faudio.empty()) faudio = L"audio";
+                    request.AppendParamFile("audio", faudio, path);
                 }
                 else {
                     request.AppendParamFile("file", CUtils::GetFileBaseName(path), path);

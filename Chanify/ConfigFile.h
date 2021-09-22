@@ -23,6 +23,7 @@ private:
 	std::wstring	m_name;
 	std::wstring	m_endpoint;
 	std::wstring	m_token;
+	std::wstring	m_interruptionLevel;
 	UINT			m_sound;
 
 	inline static std::wstring readString(const std::wstring path, const std::wstring& key) {
@@ -44,10 +45,12 @@ public:
 		m_endpoint = readString(path, L"endpoint");
 		m_token = readString(path, L"token");
 		m_sound = readInteger(path, L"sound");
+		m_interruptionLevel = readString(path, L"interruption-level");
 	}
 
 	inline const std::wstring& GetEndpoint(void) const { return m_endpoint; }
 	inline const std::wstring& GetToken(void) const { return m_token; }
+	inline const std::wstring& GetInterruptionLevel(void) const { return m_interruptionLevel; }
 	inline UINT GetSound(void) const { return m_sound; }
 };
 

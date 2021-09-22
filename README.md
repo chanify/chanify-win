@@ -20,6 +20,7 @@ name=Test
 endpoint=https://<endpoint>:<port>
 sound=1
 token=<senc node token>
+interruption-level=<interruption-level>
 ```
 
 | Key      | Default | Description                                 |
