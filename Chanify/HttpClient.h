@@ -219,7 +219,7 @@ public:
 					DWORD dwRequestFlags = (INTERNET_SCHEME_HTTP == urlComp.nScheme ? 0 : WINHTTP_FLAG_SECURE);
 					HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"POST", urlPath.c_str(), NULL, NULL, NULL, dwRequestFlags);
 					if (hRequest != NULL) {
-						if (WinHttpSetTimeouts(hRequest, 10000, 10000, 15000, 15000)
+						if (WinHttpSetTimeouts(hRequest, 30000, 30000, 60000, 60000)
 							&& SetHeader(hRequest, L"Token", request.GetToken().c_str())
 							&& SetHeader(hRequest, L"Content-Type", request.GetContentType().c_str())) {
 							DWORD totalSize = request.GetContentLength();
