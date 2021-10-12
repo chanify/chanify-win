@@ -17,6 +17,7 @@
 #include <time.h>
 #include <string>
 #include <memory>
+#include <algorithm>
 #pragma comment(lib, "userenv.lib")
 #pragma comment(lib, "version.lib")
 
@@ -166,6 +167,12 @@ public:
 				free(lpStr);
 			}
 		}
+		return res;
+	}
+
+	inline static std::string HttpFileEscape(const std::string& str) {
+		std::string res = str;
+		std::replace(res.begin(), res.end(), '\"', ' ');
 		return res;
 	}
 

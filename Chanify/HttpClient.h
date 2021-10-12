@@ -64,8 +64,8 @@ private:
 
 	public:
 		explicit FileParam(const std::string& name, const std::wstring& fname, const std::wstring& path) : IParam(name) {
-			m_data = std::string("Content-Disposition: form-data; name=\"") + CUtils::HttpEscape(name)
-					+ "\"; filename=\"" + CUtils::HttpEscape(CUtils::W2A(fname)) + "\"\r\nContent-Type: application/octet-stream\r\n\r\n";
+			m_data = std::string("Content-Disposition: form-data; name=\"") + CUtils::HttpFileEscape(name)
+					+ "\"; filename=\"" + CUtils::HttpFileEscape(CUtils::W2A(fname)) + "\"\r\nContent-Type: application/octet-stream\r\n\r\n";
 			m_fp = _wfopen(path.c_str(), L"rb");
 		}
 		virtual ~FileParam() {
