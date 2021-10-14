@@ -23,12 +23,18 @@ token=<senc node token>
 interruption-level=<interruption-level>
 ```
 
-| Key      | Default | Description                                 |
-| -------- | ------- | ------------------------------------------- |
-| name     | None    | The node server name.                       |
-| endpoint | None    | The node server endpoint.                   |
-| sound    | `0`     | `1` enable sound, otherwise disable sound.  |
-| token    | None    | The node server token for send.             |
+| Key                | Default | Description                                       |
+| ------------------ | -------- | ------------------------------------------------ |
+| name               | None     | The node server name.                            |
+| endpoint           | None     | The node server endpoint.                        |
+| sound              | `0`      | `1` enable sound, otherwise disable sound.       |
+| token              | None     | The node server token for send.                  |
+| interruption-level | `active` | Interruption level for timing of a notification. |
+
+`interruption-level`:
+  - `active`: Lights up screen and may play a sound.
+  - `passive`: Does not light up screen or play sound.
+  - `time-sensitive`: Lights up screen and may play a sound; May be presented during Do Not Disturb.
 
 ## Contributing
 
